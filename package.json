@@ -1,0 +1,34 @@
+{
+  "name": "ae-scripting-framework",
+  "version": "2.0.0",
+  "description": "A comprehensive JavaScript library for automating Adobe After Effects with a clean, chainable API",
+  "main": "build/ae-scripting.jsx",
+  "scripts": {
+    "build": "node build-script.js",
+    "build:min": "node build-script.js --minify",
+    "test": "echo \"Run tests in After Effects Script Editor\"",
+    "docs": "jsdoc src -r -d docs"
+  },
+  "keywords": [
+    "after-effects",
+    "scripting",
+    "automation",
+    "extendscript",
+    "nexrender",
+    "motion-graphics",
+    "video-editing"
+  ],
+  "author": "Asaf Cohen",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AsafCN/ae-scripting-framework"
+  },
+  "bugs": {
+    "url": "https://github.com/AsafCN/ae-scripting-framework/issues"
+  },
+  "homepage": "https://github.com/AsafCN/ae-scripting-framework#readme",
+  "engines": {
+    "after-effects": ">=2023"
+  }
+}
