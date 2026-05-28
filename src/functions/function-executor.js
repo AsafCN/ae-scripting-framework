@@ -38,82 +38,7 @@
          * @returns {Object} Execution result
          */
         textParamsSet: function(params) {
-            if (!params.composition) {
-                throw new Error("Missing required parameter: composition");
-            }
-            if (!params.layerName) {
-                throw new Error("Missing required parameter: layerName");
-            }
-
-            var comp = ae.comp.getByName(params.composition);
-            if (!comp) {
-                throw new Error("Composition '" + params.composition + "' not found");
-            }
-
-            var layer = ae.layer.getByName(comp, params.layerName);
-            if (!layer) {
-                throw new Error("Layer '" + params.layerName + "' not found");
-            }
-
-            // Apply text properties
-            if (params.textValue !== undefined) {
-                ae.text.setText(layer, params.textValue);
-            }
-
-            if (params.positionValue) {
-                ae.property.setValue(layer.property("Position"), params.positionValue);
-            }
-
-            if (params.scaleValue) {
-                ae.property.setValue(layer.property("Scale"), params.scaleValue);
-            }
-
-            if (params.rotationValue !== undefined) {
-                ae.property.setValue(layer.property("Rotation"), params.rotationValue);
-            }
-
-            if (params.opacityValue !== undefined) {
-                ae.property.setValue(layer.property("Opacity"), params.opacityValue);
-            }
-
-            // Apply expressions
-            if (params.scaleExpression) {
-                ae.expression.set(layer.property("Scale"), params.scaleExpression);
-            }
-
-            if (params.opacityExpression) {
-                ae.expression.set(layer.property("Opacity"), params.opacityExpression);
-            }
-
-            if (params.positionExpression) {
-                ae.expression.set(layer.property("Position"), params.positionExpression);
-            }
-
-            if (params.rotationExpression) {
-                ae.expression.set(layer.property("Rotation"), params.rotationExpression);
-            }
-
-            // Apply text-specific properties
-            if (params.fontSize !== undefined) {
-                ae.text.setSize(layer, params.fontSize);
-            }
-
-            if (params.fontColor) {
-                ae.text.setColor(layer, params.fontColor);
-            }
-
-            if (params.fontFamily) {
-                ae.text.setFont(layer, params.fontFamily);
-            }
-
-            return {
-                success: true,
-                composition: params.composition,
-                layer: params.layerName,
-                properties: Object.keys(params).filter(key => 
-                    key !== 'composition' && key !== 'layerName'
-                )
-            };
+            return ae.composition.setTextParams(params);
         },
 
         /**
@@ -122,8 +47,7 @@
          * @returns {Object} Execution result
          */
         layerPropertySet: function(params) {
-            // Implementation for layer-property-set
-            return { success: true, function: 'layer-property-set' };
+            return ae.composition.setLayerProperty(params);
         },
 
         /**
@@ -132,8 +56,7 @@
          * @returns {Object} Execution result
          */
         effectPropertySet: function(params) {
-            // Implementation for effect-property-set
-            return { success: true, function: 'effect-property-set' };
+            return ae.composition.setEffectProperty(params);
         },
 
         /**
@@ -157,6 +80,14 @@
                 ae.render.setOutputFile(renderItem, params.outputFile);
             }
 
+            if (params.outputTemplate) {
+                ae.render.setOutputModule(renderItem, params.outputTemplate);
+            }
+
+            if (params.renderSettings) {
+                ae.render.setRenderSettings(renderItem, params.renderSettings);
+            }
+
             if (params.startRender !== false) {
                 ae.render.startRender();
             }
@@ -164,6 +95,7 @@
             return {
                 success: true,
                 composition: params.composition,
+                renderItem: renderItem,
                 outputFile: params.outputFile
             };
         }
