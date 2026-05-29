@@ -2,12 +2,6 @@
  * Expressions module exports
  */
 
-// Import expressions modules
-#include "expressions.js"
-
-// Export expressions namespace
 (function(ae) {
-    ae.expressions = {
-        base: ae.expression
-    };
+    // ae.expression is already defined and extended in expressions.js
 }(ae));

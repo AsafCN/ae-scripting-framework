@@ -9,30 +9,60 @@ const config = {
   minifiedFile: 'ae-scripting-min.jsx'
 };
 
-// Get all JSX files recursively
-function getJSXFiles(dir) {
-  let results = [];
-  const list = fs.readdirSync(dir);
+// Get all JS files in correct order
+function getFiles() {
+  const coreFiles = [
+    'core/framework.js',
+    'core/utils.js',
+    'core/index.js'
+  ];
+
+  const moduleDirs = [
+    'application',
+    'project',
+    'composition',
+    'layer',
+    'properties',
+    'effects',
+    'expressions',
+    'masks',
+    'markers',
+    'render',
+    'automation',
+    'functions'
+  ];
+
+  let files = [];
   
-  list.forEach(file => {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-    
-    if (stat && stat.isDirectory()) {
-      results = results.concat(getJSXFiles(filePath));
-    } else if (path.extname(file) === '.js') {
-      results.push(filePath);
+  coreFiles.forEach(f => files.push(path.join(config.srcDir, f)));
+
+  moduleDirs.forEach(dir => {
+    const dirPath = path.join(config.srcDir, dir);
+    if (fs.existsSync(dirPath)) {
+      const dirFiles = fs.readdirSync(dirPath);
+      // Ensure specific order if needed, otherwise alphabetical
+      dirFiles.sort().forEach(f => {
+        if (f.endsWith('.js') && f !== 'index.js') {
+          files.push(path.join(dirPath, f));
+        }
+      });
+      if (fs.existsSync(path.join(dirPath, 'index.js'))) {
+        files.push(path.join(dirPath, 'index.js'));
+      }
     }
   });
-  
-  return results;
+
+  // Main entry point last
+  files.push(path.join(config.srcDir, 'main.js'));
+
+  return files;
 }
 
 // Build the framework
 function buildFramework(minify = false) {
   console.log('Building AE Scripting Framework...');
   
-  const files = getJSXFiles(config.srcDir);
+  const files = getFiles();
   let output = `/**
  * After Effects Scripting Framework
  * @version 2.0.0
@@ -52,30 +82,40 @@ function buildFramework(minify = false) {
 }(this, function() {
     'use strict';
 
-    var AEFramework = {
-        version: "2.0.0",
-        aeVersion: "2023+",
-        debug: false
-    };
-
-    // Include all modules\n\n`;
+    var ae; // This will hold our AEFramework instance\n\n`;
 
   // Read and concatenate all files
   files.forEach(file => {
-    const content = fs.readFileSync(file, 'utf8');
-    output += '    // ' + path.relative(config.srcDir, file) + '\n';
+    let content = fs.readFileSync(file, 'utf8');
+
+    // Remove #include directives to ensure the bundle is self-contained
+    content = content.replace(/^\s*#include\s+["'].*["']/gm, '// (included in bundle)');
+
+    output += '    // --- ' + path.relative(config.srcDir, file) + ' ---\n';
+
+    if (file.endsWith('core/framework.js')) {
+        // Strip the UMD wrapper from core/framework.js and just extract the factory body
+        const factoryMatch = content.match(/function\(\) \{([\s\S]*?)return AEFramework;\s*\}\)\);/);
+        if (factoryMatch) {
+            content = factoryMatch[1];
+            content = content.replace(/var AEFramework =/, 'ae =');
+        }
+    }
+
     output += content + '\n\n';
   });
 
-  output += `    return AEFramework;
+  output += `    return ae;
 }));`;
 
   // Minify if requested
   if (minify) {
+    // Simple minification that keeps internal logic intact
     output = output
-      .replace(/\/\*[\s\S]*?\*\//g, '') // Remove comments
-      .replace(/\s+/g, ' ') // Collapse whitespace
-      .replace(/\s*([{}();,=])\s*/g, '$1') // Remove spaces around operators
+      .replace(/\/\/\s*---\s*.*\s*---\n/g, '') // Remove our custom markers
+      .replace(/\/\*[\s\S]*?\*\//g, '') // Remove block comments
+      // .replace(/\/\/.*/g, '') // Remove line comments - BE CAREFUL with URLs/regex
+      .replace(/\n\s*\n/g, '\n') // Collapse multiple newlines
       .trim();
   }
 
